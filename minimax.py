@@ -343,7 +343,7 @@ def main():
     parser = argparse.ArgumentParser(description='Gomoku Player')
     parser.add_argument('-n', type=int, default=11, help='This option specifies the size of the board. Allowed values are from 5 to 26. The default value is 11.')
     parser.add_argument('-l', action='store_true', help='If this option is specified, the human opponent is going to play with the light colors. If the option is not specified, the human player will be playing with the dark colors. In both cases, the dark players move first.')
-    parser.add_argument('-d', type=int, default=3, help='This option specifies the depth of search for Minimax algorithm. The default value is 3.')
+    parser.add_argument('-d', type=int, default=3, help='[DOESNOT DO ANYTHING, depth is set to 3] This option specifies the depth of search for Minimax algorithm. The default value is 3.')
 
     args = parser.parse_args()
 
