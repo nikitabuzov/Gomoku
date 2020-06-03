@@ -164,12 +164,13 @@ def getScore(board, computerColor, playerColor):
     # score = random.uniform(1,10)
     return score
 
-def generateMoves(board, computerColor, playerColor, depth):
+def generateMinimaxMoves(board, computerColor, playerColor, depth):
     scenarios = dict()
     max_moves = set() # empty fields on the board for MAX to play
     min_moves = set() # options for MIN to play after possible MAX move
     alpha = float('-inf')
     beta = float('inf')
+    scores = dict()
     # Threat space
     threatSpace = set()
     for row in range(board.shape[0]):
@@ -210,8 +211,9 @@ def generateMoves(board, computerColor, playerColor, depth):
         min_moves.remove(maxmove)
         if len(min_moves) == 0:
             scenarios[maxmove] = 1
-            return scenarios
+            break
         scenarios[maxmove] = dict()
+        # alpha = max(alpha, themovescore)
         for minmove in min_moves:
             new_board = board.copy()
             max_move = moveConvertType(maxmove)
@@ -220,19 +222,16 @@ def generateMoves(board, computerColor, playerColor, depth):
             new_board[min_move[0]][min_move[1]] = playerColor
             # Get scores for all the possible scenarios
             scenarios[maxmove][minmove] = getScore(new_board, computerColor, playerColor)
-            # Alpha - Beta pruning
-            # beta = min(beta,scenarios[maxmove][minmove])
-    return scenarios
+        # Alpha pruning
+            if scenarios[maxmove][minmove] <= alpha:
+                break
+        bestMinMove = min(scenarios[maxmove].items(), key=operator.itemgetter(1))[0]
+        score = scenarios[maxmove][bestMinMove]
+        alpha = max(alpha, score)
+        scores[maxmove] = score
 
-def minimax(scenarios):
-    scores = dict()
-    if len(scenarios) == 1:
+    if len(scenarios) == 1: # this is set for the last open move on the board
         return moveConvertType(list(scenarios.keys())[0])
-    for move in scenarios:
-        bestMinMove = min(scenarios[move].items(), key=operator.itemgetter(1))[0]
-        score = scenarios[move][bestMinMove]
-        # print(score)
-        scores[move] = score
     bestMaxMove = max(scores.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
     return move
@@ -242,8 +241,8 @@ def getComputerMove(board, computerColor, playerColor, depth):
     if not board.any():
         move = [int(len(board)/2+1), int(len(board)/2+1)]
     else:
-        scenarios = generateMoves(board, computerColor, playerColor, depth) # return dict of dicts with moves and scores
-        move = minimax(scenarios) # make a move based on minimax algorithm
+        move = generateMinimaxMoves(board, computerColor, playerColor, depth) # return dict of dicts with moves and scores
+        # move = minimax(scenarios) # make a move based on minimax algorithm
 
     move_string = moveConvertType(move)
     line = 'Move played: ' + move_string + '\n'
