@@ -168,15 +168,49 @@ def generateMoves(board, computerColor, playerColor, depth):
     scenarios = dict()
     max_moves = set() # empty fields on the board for MAX to play
     min_moves = set() # options for MIN to play after possible MAX move
+    alpha = float('-inf')
+    beta = float('inf')
+    # Threat space
+    threatSpace = set()
+    for row in range(board.shape[0]):
+        for col in range(board.shape[1]):
+            if board[row][col] != EMPTY:
+                if row == 0:
+                    if col == 0:
+                        threatMoves = set([moveConvertType([row,col+1]),moveConvertType([row+1,col]),moveConvertType([row+1,col+1])])
+                    if col == board.shape[1]-1:
+                        threatMoves = set([moveConvertType([row,col-1]),moveConvertType([row+1,col]),moveConvertType([row+1,col-1])])
+                    else:
+                        threatMoves = set([moveConvertType([row,col-1]),moveConvertType([row,col+1]),moveConvertType([row+1,col-1]),moveConvertType([row+1,col]),moveConvertType([row+1,col+1])])
+                if row == board.shape[0]-1:
+                    if col == 0:
+                        threatMoves = set([moveConvertType([row,col+1]),moveConvertType([row-1,col]),moveConvertType([row-1,col+1])])
+                    if col == board.shape[1]-1:
+                        threatMoves = set([moveConvertType([row,col-1]),moveConvertType([row-1,col]),moveConvertType([row-1,col-1])])
+                    else:
+                        threatMoves = set([moveConvertType([row,col-1]),moveConvertType([row,col+1]),moveConvertType([row-1,col-1]),moveConvertType([row-1,col]),moveConvertType([row-1,col+1])])
+                else:
+                    if col == 0:
+                        threatMoves = set([moveConvertType([row-1,col]),moveConvertType([row-1,col+1]),moveConvertType([row,col+1]),moveConvertType([row+1,col]),moveConvertType([row+1,col+1])])
+                    if col == board.shape[1]-1:
+                        threatMoves = set([moveConvertType([row-1,col-1]),moveConvertType([row-1,col]),moveConvertType([row,col-1]),moveConvertType([row+1,col-1]),moveConvertType([row+1,col])])
+                    else:
+                        threatMoves = set([moveConvertType([row-1,col-1]),moveConvertType([row-1,col]),moveConvertType([row-1,col+1]),moveConvertType([row,col-1]),moveConvertType([row,col+1]),moveConvertType([row+1,col-1]),moveConvertType([row+1,col]),moveConvertType([row+1,col+1])])
+                threatSpace.update(threatMoves)
+
     for row in range(board.shape[0]):
         for col in range(board.shape[1]):
             if board[row][col] == EMPTY:
                 possible_move = moveConvertType([row,col])
                 max_moves.add(possible_move)
+    max_moves = max_moves.intersection(threatSpace)
     # Create new boards with possible max moves
     for maxmove in max_moves:
         min_moves = max_moves.copy()
         min_moves.remove(maxmove)
+        if len(min_moves) == 0:
+            scenarios[maxmove] = 1
+            return scenarios
         scenarios[maxmove] = dict()
         for minmove in min_moves:
             new_board = board.copy()
@@ -186,11 +220,14 @@ def generateMoves(board, computerColor, playerColor, depth):
             new_board[min_move[0]][min_move[1]] = playerColor
             # Get scores for all the possible scenarios
             scenarios[maxmove][minmove] = getScore(new_board, computerColor, playerColor)
+            # Alpha - Beta pruning
+            # beta = min(beta,scenarios[maxmove][minmove])
     return scenarios
 
 def minimax(scenarios):
     scores = dict()
-    
+    if len(scenarios) == 1:
+        return moveConvertType(list(scenarios.keys())[0])
     for move in scenarios:
         bestMinMove = min(scenarios[move].items(), key=operator.itemgetter(1))[0]
         score = scenarios[move][bestMinMove]
@@ -205,10 +242,6 @@ def getComputerMove(board, computerColor, playerColor, depth):
     if not board.any():
         move = [int(len(board)/2+1), int(len(board)/2+1)]
     else:
-    #### MINIMAX Algorithm ####
-    # 1. Generate all possible scenarios of depth D (possible moves)
-    # 2. Compute all childs' scores (how likely each will lead to a win)
-    # 3. Use minimax algorithm to make a choice of next move
         scenarios = generateMoves(board, computerColor, playerColor, depth) # return dict of dicts with moves and scores
         move = minimax(scenarios) # make a move based on minimax algorithm
 
