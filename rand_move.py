@@ -45,13 +45,19 @@ def isMoveIllegal(board, move):
         illegal_flag = False
     return illegal_flag
 
-def getPlayerMove():
-    playerInput = input()
-    playerMove = re.split('(\d+)', playerInput)
-    letters = playerMove[0].split(' ')
-    col = string.ascii_lowercase.index(letters[-1])
-    row = int(playerMove[1])-1
-    move = [row, col]
+def getPlayerMove(board):
+    illegal = True
+    while illegal:
+        playerInput = input()
+        playerMove = re.split('(\d+)', playerInput)
+        letters = playerMove[0].split(' ')
+        col = string.ascii_lowercase.index(letters[-1])
+        row = int(playerMove[1])-1
+        move = [row, col]
+        if isMoveIllegal(board, move) == True:
+            print('Illegal move! Try again:')
+        else:
+            illegal = False
     line = 'Move played: ' + letters[-1] + playerMove[1] + '\n'
     sys.stdout.write(line)
     sys.stdout.flush()
@@ -121,7 +127,7 @@ def play_gomoku(board_size, light_player_flag):
         if turn == 'player':
             # Player's turn to make a move
             print_board(the_board)
-            move = getPlayerMove()
+            move = getPlayerMove(the_board)
             makeMove(the_board, playerColor, move)
 
             if isWinner(the_board, playerColor):
