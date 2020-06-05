@@ -97,7 +97,7 @@ def boardToStrings(board, player):
         for item in row:
             if item == 0:
                 rowStr += 'o'
-            if item == player:
+            elif item == player:
                 rowStr += 'x'
             else:
                 rowStr += 'n'
@@ -109,7 +109,7 @@ def boardToStrings(board, player):
         for item in col:
             if item == 0:
                 colStr += 'o'
-            if item == player:
+            elif item == player:
                 colStr += 'x'
             else:
                 colStr += 'n'
@@ -122,7 +122,7 @@ def boardToStrings(board, player):
         for item in diag:
             if item == 0:
                 diagStr += 'o'
-            if item == player:
+            elif item == player:
                 diagStr += 'x'
             else:
                 diagStr += 'n'
@@ -132,7 +132,7 @@ def boardToStrings(board, player):
         for item in diag:
             if item == 0:
                 diagStr += 'o'
-            if item == player:
+            elif item == player:
                 diagStr += 'x'
             else:
                 diagStr += 'n'
@@ -234,6 +234,8 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
         return moveConvertType(list(scenarios.keys())[0])
     bestMaxMove = max(scores.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
+
+    print(scores)
     return move
 
 def getComputerMove(board, computerColor, playerColor, depth):
