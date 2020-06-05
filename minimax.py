@@ -10,17 +10,17 @@ import operator
 EMPTY = 0
 DARK = 1
 LIGHT = 2
-heuristic = {'quintet': [20000000, ['xxxxx']],
-'quartet2open': [400000, ['oxxxxo']],
-'quartet1open': [50000, ['nxxxxo', 'oxxxxn']],
-'triplet2open': [30000, ['oxxxo']],
-'triplet1open': [15000, ['nxxxoo', 'ooxxxn']],
-'voidQuartet2open': [7000, ['oxoxxo', 'oxxoxo']],
-'voidQuartet1open': [3000, ['nxoxxo', 'nxxoxo', 'oxxoxn', 'oxoxxn']],
-'double2open': [500, ['ooxxo', 'oxxoo']],
-'double1open': [400, ['nxxooo', 'oooxxn']],
-'voidTriplet2opens': [100, ['oxoxo']],
-'voidTriplet1open': [40, ['nxoxoo', 'ooxoxn']]}
+heuristic = {'five': [20000000, ['xxxxx']],
+'four2open': [400000, ['oxxxxo']],
+'four1open': [50000, ['nxxxxo', 'oxxxxn']],
+'three2open': [30000, ['oxxxo']],
+'three1open': [15000, ['nxxxoo', 'ooxxxn']],
+'voidFour2open': [7000, ['oxoxxo', 'oxxoxo']],
+'voidFour1open': [3000, ['nxoxxo', 'nxxoxo', 'oxxoxn', 'oxoxxn']],
+'two2open': [500, ['ooxxo', 'oxxoo']],
+'two1open': [400, ['nxxooo', 'oooxxn']],
+'voidThree2opens': [100, ['oxoxo']],
+'voidThree1open': [40, ['nxoxoo', 'ooxoxn']]}
 
 def print_board(board):
     sys.stdout.write("  ")
@@ -74,6 +74,7 @@ def getPlayerMove(board):
     illegal = True
     while illegal:
         try:
+            print('Enter your move:  ')
             playerInput = input()
             move = moveConvertType(playerInput)
             if isMoveTaken(board, move) == True:
