@@ -2,6 +2,8 @@ import re
 import string
 import random
 import numpy as np
+import operator
+
 
 # some_scores = [0,1,2,3,4]
 # score = random.choice(some_scores)
@@ -23,8 +25,8 @@ import numpy as np
 
 
 a = {'a5':1, 'b5':2}
-for item in a.keys():
-    print(a[item])
+best = max(a.items(), key=operator.itemgetter(1))[0]
+print(best)
 # print(b)
 
 

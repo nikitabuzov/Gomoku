@@ -253,6 +253,9 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
         return moveConvertType(list(scenarios.keys())[0])
     bestMaxMove = max(scores2.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
+
+    print(scores2)
+
     return move
 
 def getComputerMove(board, computerColor, playerColor, depth):
