@@ -177,11 +177,13 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
     scenarios = dict()
     max_moves1 = set()
     max_moves2 = set()
-    min_moves = set()
+    min_moves1 = set()
+    min_moves2 = set()
     alpha = float('-inf')
     beta = float('inf')
     scores1 = dict()
     scores2 = dict()
+    scores3 = dict()
 
     # Find only moves that are adjacent to the moves that have been made
     threatSpace = set()
@@ -224,49 +226,73 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
 
     # Create new boards with possible minimax moves and evaluate scenarios
     for maxmove1 in max_moves1:
-        min_moves = max_moves1.copy()
-        min_moves.remove(maxmove1)
-        # if len(min_moves) == 0:
-        #     scenarios[maxmove1] = 1
-        #     break
+        min_moves1 = max_moves1.copy()
+        min_moves1.remove(maxmove1)
         scenarios[maxmove1] = dict()
-        for minmove in min_moves:
-            max_moves2 = min_moves.copy()
-            max_moves2.remove(minmove)
-            scenarios[maxmove1][minmove] = dict()
+        for minmove1 in min_moves1:
+            max_moves2 = min_moves1.copy()
+            max_moves2.remove(minmove1)
+            scenarios[maxmove1][minmove1] = dict()
             for maxmove2 in max_moves2:
-                new_board = board.copy()
-                max_move1 = moveConvertType(maxmove1)
-                min_move = moveConvertType(minmove)
-                max_move2 = moveConvertType(maxmove2)
-                new_board[max_move1[0]][max_move1[1]] = computerColor
-                new_board[min_move[0]][min_move[1]] = playerColor
-                # convert the new board to strings
-                computer_board = boardToStrings(new_board, computerColor)
-                player_board = boardToStrings(new_board, playerColor)
-                # if winning move available, then go for it!
-                if searchBoardSeq(computer_board, WIN) != 0:
-                    print('found a winning move')
-                    return max_move1
-                # if MIN threats to win in the next move, then block it!
-                if searchBoardSeq(player_board, WIN) != 0:
-                    print('threat of loosing in one move, blocking...')
-                    return min_move
+                min_moves2 = max_moves2.copy()
+                min_moves2.remove(maxmove2)
+                scenarios[maxmove1][minmove1][maxmove2] = dict()
+                for minmove2 in min_moves2:
+
+
+                    new_board = board.copy()
+                    max_move1 = moveConvertType(maxmove1)
+                    min_move1 = moveConvertType(minmove1)
+                    max_move2 = moveConvertType(maxmove2)
+                    min_move2 = moveConvertType(minmove2)
+
+                    new_board[max_move1[0]][max_move1[1]] = computerColor
+                    new_board[min_move1[0]][min_move1[1]] = playerColor
+
+                    # convert the new board to strings
+                    computer_board = boardToStrings(new_board, computerColor)
+                    player_board = boardToStrings(new_board, playerColor)
+                    # if winning move available, then go for it!
+                    if searchBoardSeq(computer_board, WIN) != 0:
+                        print('found a winning move')
+                        return max_move1
+                    # if MIN threats to win in the next move, then block it!
+                    if searchBoardSeq(player_board, WIN) != 0:
+                        print('threat of loosing in one move, blocking...')
+                        return min_move1
+
+                    new_board[max_move2[0]][max_move2[1]] = computerColor
+                    new_board[min_move2[0]][min_move2[1]] = playerColor
+
+                    # convert the new board to strings
+                    computer_board = boardToStrings(new_board, computerColor)
+                    player_board = boardToStrings(new_board, playerColor)
+
+
                 # if searchBoardSeq(player_board, STRAIGHT_FOUR) != 0:
                 #     print('threat of losing in two moves, preventing...')
                 #     return min_move
-                # new_board[max_move2[0]][max_move2[1]] = computerColor
-                scenarios[maxmove1][minmove][maxmove2] = getScore(computer_board, player_board)
-            # Beta pruning
-                if scenarios[maxmove1][minmove][maxmove2] >= beta:
+
+                    scenarios[maxmove1][minmove1][maxmove2][minmove2] = getScore(computer_board, player_board)
+
+                    # Alpha pruning
+                    if scenarios[maxmove1][minmove1][maxmove2][minmove2] <= alpha:
+                        break
+
+                bestMinMove2 = min(scenarios[maxmove1][minmove1][maxmove2].items(), key=operator.itemgetter(1))[0]
+                score3 = scenarios[maxmove1][minmove1][maxmove2][bestMinMove2]
+                alpha = max(alpha,score3)
+                scores3[maxmove2] = score3
+
+                # Beta pruning
+                if score3 >= beta:
                     break
-            bestMaxMove2 = max(scenarios[maxmove1][minmove].items(), key=operator.itemgetter(1))[0]
-            score1 = scenarios[maxmove1][minmove][bestMaxMove2]
+
+            bestMaxMove2 = max(scores3.items(), key=operator.itemgetter(1))[0]
+            score1 = scores3[bestMaxMove2]
             beta = min(beta,score1)
-            scores1[minmove] = score1
-        # Alpha pruning
-            if score1 <= alpha:
-                break
+            scores1[minmove1] = score1
+
         bestMinMove = min(scores1.items(), key=operator.itemgetter(1))[0]
         score = scores1[bestMinMove]
         alpha = max(alpha, score)
@@ -274,7 +300,7 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
 
     if len(scenarios) == 1: # this is set for the last open move on the board
         return moveConvertType(list(scenarios.keys())[0])
-    
+
     bestMaxMove = max(scores2.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
 
