@@ -24,6 +24,9 @@ heuristic = {'five': [200000000, ['xxxxx']],
 'voidThree2opens': [100, ['oxoxo']],
 'voidThree1open': [40, ['nxoxoo', 'ooxoxn']]}
 
+WIN = heuristic['five'][1][0]
+STRAIGHT_FOUR = heuristic['four2open'][1][0]
+
 def print_board(board):
     sys.stdout.write("  ")
     i = 0
@@ -148,14 +151,13 @@ def boardToStrings(board, player):
     strList = rowStrList + colStrList + diagStrList
     return strList
 
-def searchBoardSeq(board, player, sequence):
-    boardLists = boardToStrings(board, player)
+def searchBoardSeq(board, sequence):
     occurances = 0
-    for string in boardLists:
+    for string in board:
         occurances += len(re.findall(sequence, string))
     return occurances
 
-def getScore(board, computerColor, playerColor):
+def getScore(board_computer, board_player):
     scoreComputer = 0
     scorePlayer = 0
     for item in heuristic.keys():
@@ -164,8 +166,8 @@ def getScore(board, computerColor, playerColor):
         countPlayer = 0
         sequences = heuristic[item][1]
         for sequence in sequences:
-            countComputer += searchBoardSeq(board, computerColor, sequence)
-            countPlayer += searchBoardSeq(board, playerColor, sequence)
+            countComputer += searchBoardSeq(board_computer, sequence)
+            countPlayer += searchBoardSeq(board_player, sequence)
         scoreComputer += countComputer * weight
         scorePlayer += countPlayer * weight
     score = scoreComputer - scorePlayer * SCORE_WEIGHT
@@ -181,11 +183,13 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
     scores1 = dict()
     scores2 = dict()
 
-    # Threat space
     # Find only moves that are adjacent to the moves that have been made
     threatSpace = set()
     for row in range(board.shape[0]):
         for col in range(board.shape[1]):
+            if board[row][col] == EMPTY:
+                possible_move = moveConvertType([row,col])
+                max_moves1.add(possible_move)
             if board[row][col] != EMPTY:
                 if row == 0:
                     if col == 0:
@@ -210,23 +214,21 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
                         threatMoves = set([moveConvertType([row-1,col-1]),moveConvertType([row-1,col]),moveConvertType([row-1,col+1]),moveConvertType([row,col-1]),moveConvertType([row,col+1]),moveConvertType([row+1,col-1]),moveConvertType([row+1,col]),moveConvertType([row+1,col+1])])
                 threatSpace.update(threatMoves)
 
-    # Find all possible moves
-    for row in range(board.shape[0]):
-        for col in range(board.shape[1]):
-            if board[row][col] == EMPTY:
-                possible_move = moveConvertType([row,col])
-                max_moves1.add(possible_move)
-
     # Moves for evaluation: empty and inside the threat space
     max_moves1 = max_moves1.intersection(threatSpace)
+
+    # special case: only last one/two squares are available on the board
+    if len(max_moves1)<=2:
+        print('last one or two moves open, choosing randomly')
+        return moveConvertType(random.choice(max_moves1))
 
     # Create new boards with possible minimax moves and evaluate scenarios
     for maxmove1 in max_moves1:
         min_moves = max_moves1.copy()
         min_moves.remove(maxmove1)
-        if len(min_moves) == 0:
-            scenarios[maxmove1] = 1
-            break
+        # if len(min_moves) == 0:
+        #     scenarios[maxmove1] = 1
+        #     break
         scenarios[maxmove1] = dict()
         for minmove in min_moves:
             max_moves2 = min_moves.copy()
@@ -239,8 +241,22 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
                 max_move2 = moveConvertType(maxmove2)
                 new_board[max_move1[0]][max_move1[1]] = computerColor
                 new_board[min_move[0]][min_move[1]] = playerColor
+                # convert the new board to strings
+                computer_board = boardToStrings(new_board, computerColor)
+                player_board = boardToStrings(new_board, playerColor)
+                # if winning move available, then go for it!
+                if searchBoardSeq(computer_board, WIN) != 0:
+                    print('found a winning move')
+                    return max_move1
+                # if MIN threats to win in the next move, then block it!
+                if searchBoardSeq(player_board, WIN) != 0:
+                    print('threat of loosing in one move, blocking...')
+                    return min_move
+                # if searchBoardSeq(player_board, STRAIGHT_FOUR) != 0:
+                #     print('threat of losing in two moves, preventing...')
+                #     return min_move
                 # new_board[max_move2[0]][max_move2[1]] = computerColor
-                scenarios[maxmove1][minmove][maxmove2] = getScore(new_board, computerColor, playerColor)
+                scenarios[maxmove1][minmove][maxmove2] = getScore(computer_board, player_board)
             # Beta pruning
                 if scenarios[maxmove1][minmove][maxmove2] >= beta:
                     break
@@ -258,6 +274,7 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
 
     if len(scenarios) == 1: # this is set for the last open move on the board
         return moveConvertType(list(scenarios.keys())[0])
+    
     bestMaxMove = max(scores2.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
 
@@ -287,8 +304,9 @@ def makeMove(board, player, move):
     return the_board
 
 def isWinner(board, who):
-    win = heuristic['five'][1][0]
-    if searchBoardSeq(board, who, win) != 0:
+    ''' changed arguments of the func'''
+    checkboard = boardToStrings(board, who)
+    if searchBoardSeq(checkboard, WIN) != 0:
         return True
     return False
 
