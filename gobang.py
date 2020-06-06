@@ -10,14 +10,16 @@ import operator
 EMPTY = 0
 DARK = 1
 LIGHT = 2
-heuristic = {'five': [20000000, ['xxxxx']],
-'four2open': [400000, ['oxxxxo']],
-'four1open': [50000, ['nxxxxo', 'oxxxxn']],
-'three2open': [30000, ['oxxxo']],
+SCORE_WEIGHT = 1.1
+
+heuristic = {'five': [200000000, ['xxxxx']],
+'four2open': [2000000, ['oxxxxo']],
+'four1open': [1000000, ['nxxxxo', 'oxxxxn']],
+'three2open': [40000, ['oxxxo']],
 'three1open': [15000, ['nxxxoo', 'ooxxxn']],
 'voidFour2open': [7000, ['oxoxxo', 'oxxoxo']],
 'voidFour1open': [3000, ['nxoxxo', 'nxxoxo', 'oxxoxn', 'oxoxxn']],
-'two2open': [500, ['ooxxo', 'oxxoo']],
+'two2open': [1000, ['ooxxo', 'oxxoo']],
 'two1open': [400, ['nxxooo', 'oooxxn']],
 'voidThree2opens': [100, ['oxoxo']],
 'voidThree1open': [40, ['nxoxoo', 'ooxoxn']]}
@@ -94,49 +96,54 @@ def boardToStrings(board, player):
     diagStrList = []
     # row
     for row in board:
-        rowStr = ''
+        rowStr = 'n'
         for item in row:
             if item == 0:
                 rowStr += 'o'
-            if item == player:
+            elif item == player:
                 rowStr += 'x'
             else:
                 rowStr += 'n'
+        rowStr += 'n'
         rowStrList.append(rowStr)
+
     # col
     colBoard = board.copy().transpose()
     for col in colBoard:
-        colStr = ''
+        colStr = 'n'
         for item in col:
             if item == 0:
                 colStr += 'o'
-            if item == player:
+            elif item == player:
                 colStr += 'x'
             else:
                 colStr += 'n'
+        colStr += 'n'
         colStrList.append(colStr)
     # diagonal
     diagBoard1 = [board.diagonal(i) for i in range(board.shape[1]-5, -board.shape[1]+4, -1)]
     diagBoard2 = [board[::-1, :].diagonal(i) for i in range(board.shape[1]-5, -board.shape[1]+4, -1)]
     for diag in diagBoard1:
-        diagStr = ''
+        diagStr = 'n'
         for item in diag:
             if item == 0:
                 diagStr += 'o'
-            if item == player:
+            elif item == player:
                 diagStr += 'x'
             else:
                 diagStr += 'n'
+        diagStr += 'n'
         diagStrList.append(diagStr)
     for diag in diagBoard2:
-        diagStr = ''
+        diagStr = 'n'
         for item in diag:
             if item == 0:
                 diagStr += 'o'
-            if item == player:
+            elif item == player:
                 diagStr += 'x'
             else:
                 diagStr += 'n'
+        diagStr += 'n'
         diagStrList.append(diagStr)
     strList = rowStrList + colStrList + diagStrList
     return strList
@@ -161,7 +168,7 @@ def getScore(board, computerColor, playerColor):
             countPlayer += searchBoardSeq(board, playerColor, sequence)
         scoreComputer += countComputer * weight
         scorePlayer += countPlayer * weight
-    score = scoreComputer - scorePlayer
+    score = scoreComputer - scorePlayer * SCORE_WEIGHT
     return score
 
 def generateMinimaxMoves(board, computerColor, playerColor, depth):
@@ -232,7 +239,7 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
                 max_move2 = moveConvertType(maxmove2)
                 new_board[max_move1[0]][max_move1[1]] = computerColor
                 new_board[min_move[0]][min_move[1]] = playerColor
-                new_board[max_move2[0]][max_move2[1]] = computerColor
+                # new_board[max_move2[0]][max_move2[1]] = computerColor
                 scenarios[maxmove1][minmove][maxmove2] = getScore(new_board, computerColor, playerColor)
             # Beta pruning
                 if scenarios[maxmove1][minmove][maxmove2] >= beta:
@@ -261,7 +268,7 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
 def getComputerMove(board, computerColor, playerColor, depth):
     # If computer goes first, place the stone in the middle
     if not board.any():
-        move = [int(len(board)/2+1), int(len(board)/2+1)]
+        move = [int(len(board)/2), int(len(board)/2)]
     else:
         move = generateMinimaxMoves(board, computerColor, playerColor, depth)
 
@@ -280,9 +287,10 @@ def makeMove(board, player, move):
     return the_board
 
 def isWinner(board, who):
-    answer = False
-    '''TODO: check for winning sequence'''
-    return answer
+    win = heuristic['five'][1][0]
+    if searchBoardSeq(board, who, win) != 0:
+        return True
+    return False
 
 def isBoardFull(board):
     answer = False
