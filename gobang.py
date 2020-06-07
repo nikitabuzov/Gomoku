@@ -22,7 +22,7 @@ heuristic = {'five': [200000000, ['xxxxx']],
 EMPTY = 0
 DARK = 1
 LIGHT = 2
-SCORE_WEIGHT = 1.1
+SCORE_WEIGHT = 1.2
 WIN = heuristic['five'][1][0]
 STRAIGHT_FOUR = heuristic['four2open'][1][0]
 STRAIGHT_THREE = heuristic['three2open'][1][0]
@@ -180,6 +180,7 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
     scores = dict()
     four_threats = set()
     three_threats = set()
+    four_attacks = set()
     best_moves_four = dict()
     best_moves_three = dict()
 
@@ -249,7 +250,12 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
             # prevent moves that yield straight fours
             if searchBoardSeq(player_board, STRAIGHT_FOUR) != 0:
                 four_threats.add(moveConvertType(min_move))
-            # prevent moves that yield straight threes
+
+            # option to make a straight four of your own
+            if searchBoardSeq(computer_board, STRAIGHT_FOUR) != 0:
+                four_attacks.add(moveConvertType(max_move))
+
+            # # prevent moves that yield straight threes
             # if searchBoardSeq(player_board, STRAIGHT_THREE) != 0:
             #     three_threats.add(moveConvertType(min_move))
 
@@ -267,6 +273,15 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
         print('threat of a straight four in one move, preventing...')
         for threat in four_threats:
             best_moves_four[threat] = scores[threat]
+        print(best_moves_four)
+        bestMaxMove = max(best_moves_four.items(), key=operator.itemgetter(1))[0]
+        move = moveConvertType(bestMaxMove)
+        return move
+
+    if len(four_attacks) != 0:
+        print('attack of a straight four in one move, executing...')
+        for attack in four_attacks:
+            best_moves_four[attack] = scores[attack]
         print(best_moves_four)
         bestMaxMove = max(best_moves_four.items(), key=operator.itemgetter(1))[0]
         move = moveConvertType(bestMaxMove)
