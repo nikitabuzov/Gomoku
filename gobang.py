@@ -254,10 +254,6 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
 
     bestMaxMove = max(scores.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
-<<<<<<< HEAD:minimax.py
-
-=======
->>>>>>> depth2:gobang.py
     print(scores)
     return move
 
