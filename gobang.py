@@ -213,7 +213,7 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
     max_moves = max_moves.intersection(threatSpace)
 
     # special case: only last one/two squares are available on the board
-    if len(max_moves)<=2:
+    if len(max_moves) <= 2:
         print('last one or two moves open, choosing randomly')
         return moveConvertType(random.choice(tuple(max_moves)))
 
@@ -251,6 +251,10 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
         score = scenarios[maxmove][bestMinMove]
         alpha = max(alpha, score)
         scores[maxmove] = score
+
+''' TODO: beta pruning '''
+        # if score >= beta:
+        #     break
 
     bestMaxMove = max(scores.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
