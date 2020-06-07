@@ -7,11 +7,6 @@ import re
 import string
 import operator
 
-EMPTY = 0
-DARK = 1
-LIGHT = 2
-SCORE_WEIGHT = 1.1
-
 heuristic = {'five': [200000000, ['xxxxx']],
 'four2open': [2000000, ['oxxxxo']],
 'four1open': [1000000, ['nxxxxo', 'oxxxxn']],
@@ -24,6 +19,10 @@ heuristic = {'five': [200000000, ['xxxxx']],
 'voidThree2opens': [100, ['oxoxo']],
 'voidThree1open': [40, ['nxoxoo', 'ooxoxn']]}
 
+EMPTY = 0
+DARK = 1
+LIGHT = 2
+SCORE_WEIGHT = 1.1
 WIN = heuristic['five'][1][0]
 STRAIGHT_FOUR = heuristic['four2open'][1][0]
 
@@ -67,7 +66,6 @@ def moveConvertType(move):
         move = str(letter)+str(number)
     return move
 
-
 def isMoveTaken(board, move):
     # Check if the player's input move is legal
     illegal_flag = True
@@ -109,7 +107,6 @@ def boardToStrings(board, player):
                 rowStr += 'n'
         rowStr += 'n'
         rowStrList.append(rowStr)
-
     # col
     colBoard = board.copy().transpose()
     for col in colBoard:
@@ -175,13 +172,11 @@ def getScore(board_computer, board_player):
 
 def generateMinimaxMoves(board, computerColor, playerColor, depth):
     scenarios = dict()
-    max_moves1 = set()
-    max_moves2 = set()
+    max_moves = set()
     min_moves = set()
     alpha = float('-inf')
     beta = float('inf')
-    scores1 = dict()
-    scores2 = dict()
+    scores = dict()
 
     # Find only moves that are adjacent to the moves that have been made
     threatSpace = set()
@@ -189,7 +184,7 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
         for col in range(board.shape[1]):
             if board[row][col] == EMPTY:
                 possible_move = moveConvertType([row,col])
-                max_moves1.add(possible_move)
+                max_moves.add(possible_move)
             if board[row][col] != EMPTY:
                 if row == 0:
                     if col == 0:
@@ -215,77 +210,60 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
                 threatSpace.update(threatMoves)
 
     # Moves for evaluation: empty and inside the threat space
-    max_moves1 = max_moves1.intersection(threatSpace)
+    max_moves = max_moves.intersection(threatSpace)
 
     # special case: only last one/two squares are available on the board
-    if len(max_moves1)<=2:
+    if len(max_moves)<=2:
         print('last one or two moves open, choosing randomly')
-        return moveConvertType(random.choice(max_moves1))
+        return moveConvertType(random.choice(tuple(max_moves)))
 
     # Create new boards with possible minimax moves and evaluate scenarios
-    for maxmove1 in max_moves1:
-        min_moves = max_moves1.copy()
-        min_moves.remove(maxmove1)
-        # if len(min_moves) == 0:
-        #     scenarios[maxmove1] = 1
-        #     break
-        scenarios[maxmove1] = dict()
+    for maxmove in max_moves:
+        min_moves = max_moves.copy()
+        min_moves.remove(maxmove)
+        scenarios[maxmove] = dict()
         for minmove in min_moves:
-            max_moves2 = min_moves.copy()
-            max_moves2.remove(minmove)
-            scenarios[maxmove1][minmove] = dict()
-            for maxmove2 in max_moves2:
-                new_board = board.copy()
-                max_move1 = moveConvertType(maxmove1)
-                min_move = moveConvertType(minmove)
-                max_move2 = moveConvertType(maxmove2)
-                new_board[max_move1[0]][max_move1[1]] = computerColor
-                new_board[min_move[0]][min_move[1]] = playerColor
-                # convert the new board to strings
-                computer_board = boardToStrings(new_board, computerColor)
-                player_board = boardToStrings(new_board, playerColor)
-                # if winning move available, then go for it!
-                if searchBoardSeq(computer_board, WIN) != 0:
-                    print('found a winning move')
-                    return max_move1
-                # if MIN threats to win in the next move, then block it!
-                if searchBoardSeq(player_board, WIN) != 0:
-                    print('threat of loosing in one move, blocking...')
-                    return min_move
-                # if searchBoardSeq(player_board, STRAIGHT_FOUR) != 0:
-                #     print('threat of losing in two moves, preventing...')
-                #     return min_move
-                # new_board[max_move2[0]][max_move2[1]] = computerColor
-                scenarios[maxmove1][minmove][maxmove2] = getScore(computer_board, player_board)
-            # Beta pruning
-                if scenarios[maxmove1][minmove][maxmove2] >= beta:
-                    break
-            bestMaxMove2 = max(scenarios[maxmove1][minmove].items(), key=operator.itemgetter(1))[0]
-            score1 = scenarios[maxmove1][minmove][bestMaxMove2]
-            beta = min(beta,score1)
-            scores1[minmove] = score1
-        # Alpha pruning
-            if score1 <= alpha:
+
+            new_board = board.copy()
+            max_move = moveConvertType(maxmove)
+            min_move = moveConvertType(minmove)
+
+            new_board[max_move[0]][max_move[1]] = computerColor
+            new_board[min_move[0]][min_move[1]] = playerColor
+            computer_board = boardToStrings(new_board, computerColor)
+            player_board = boardToStrings(new_board, playerColor)
+
+            # if winning move available, then go for it!
+            if searchBoardSeq(computer_board, WIN) != 0:
+                print('found a winning move')
+                return max_move
+            # if MIN threats to win in the next move, then block it!
+            if searchBoardSeq(player_board, WIN) != 0:
+                print('threat of loosing in one move, blocking...')
+                return min_move
+
+            scenarios[maxmove][minmove] = getScore(computer_board, player_board)
+            # Alpha pruning
+            if scenarios[maxmove][minmove] <= alpha:
                 break
-        bestMinMove = min(scores1.items(), key=operator.itemgetter(1))[0]
-        score = scores1[bestMinMove]
+
+        bestMinMove = min(scenarios[maxmove].items(), key=operator.itemgetter(1))[0]
+        score = scenarios[maxmove][bestMinMove]
         alpha = max(alpha, score)
-        scores2[maxmove1] = score
+        scores[maxmove] = score
 
-    if len(scenarios) == 1: # this is set for the last open move on the board
-        return moveConvertType(list(scenarios.keys())[0])
-    
-    bestMaxMove = max(scores2.items(), key=operator.itemgetter(1))[0]
+    bestMaxMove = max(scores.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
-
-    print(scores2)
-
+    print(scores)
     return move
 
 def getComputerMove(board, computerColor, playerColor, depth):
-    # If computer goes first, place the stone in the middle
+    # If computer goes first, place the stone somewhere in the middle
+    size = len(board)
+    start = int(size - 3 - size/2)
+    stop = int(size - 3)
     if not board.any():
-        move = [int(len(board)/2), int(len(board)/2)]
+        move = [random.randint(start, stop), random.randint(start, stop)]
     else:
         move = generateMinimaxMoves(board, computerColor, playerColor, depth)
 
@@ -340,11 +318,12 @@ def play_gomoku(board_size, light_player_flag, depth_of_search):
             makeMove(the_board, playerColor, move)
             if isWinner(the_board, playerColor):
                 gameIsPlaying = False
+                print_board(the_board)
                 print('You have won!')
                 break
             else:
                 if isBoardFull(the_board):
-                    # drawBoard(the_board)
+                    print_board(the_board)
                     gameIsPlaying = False
                     print('The game is a tie')
                     break
@@ -358,10 +337,12 @@ def play_gomoku(board_size, light_player_flag, depth_of_search):
             makeMove(the_board, computerColor, move)
             if isWinner(the_board, computerColor):
                 gameIsPlaying = False
+                print_board(the_board)
                 print('The computer have won!')
                 break
             else:
                 if isBoardFull(the_board):
+                    print_board(the_board)
                     gameIsPlaying = False
                     print('The game is a tie')
                     break
