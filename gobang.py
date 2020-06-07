@@ -177,6 +177,8 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
     alpha = float('-inf')
     beta = float('inf')
     scores = dict()
+    four_threats = set()
+    best_moves = dict()
 
     # Find only moves that are adjacent to the moves that have been made
     threatSpace = set()
@@ -241,6 +243,9 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
             if searchBoardSeq(player_board, WIN) != 0:
                 print('threat of loosing in one move, blocking...')
                 return min_move
+            # prevent moves that yield straight fours
+            if searchBoardSeq(player_board, STRAIGHT_FOUR) != 0:
+                four_threats.add(moveConvertType(min_move))
 
             scenarios[maxmove][minmove] = getScore(computer_board, player_board)
             # Alpha pruning
@@ -252,13 +257,19 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
         alpha = max(alpha, score)
         scores[maxmove] = score
 
-''' TODO: beta pruning '''
-        # if score >= beta:
-        #     break
+    if len(four_threats) != 0:
+        print('threat of a straight four in one move, preventing...')
+        for threat in four_threats:
+            best_moves[threat] = scores[threat]
+        print(best_moves)
+        bestMaxMove = max(best_moves.items(), key=operator.itemgetter(1))[0]
+        move = moveConvertType(bestMaxMove)
+        return move
 
     bestMaxMove = max(scores.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
     print(scores)
+
     return move
 
 def getComputerMove(board, computerColor, playerColor, depth):
