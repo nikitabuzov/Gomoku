@@ -25,6 +25,7 @@ LIGHT = 2
 SCORE_WEIGHT = 1.1
 WIN = heuristic['five'][1][0]
 STRAIGHT_FOUR = heuristic['four2open'][1][0]
+STRAIGHT_THREE = heuristic['three2open'][1][0]
 
 def print_board(board):
     sys.stdout.write("  ")
@@ -178,7 +179,9 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
     beta = float('inf')
     scores = dict()
     four_threats = set()
-    best_moves = dict()
+    three_threats = set()
+    best_moves_four = dict()
+    best_moves_three = dict()
 
     # Find only moves that are adjacent to the moves that have been made
     threatSpace = set()
@@ -246,6 +249,9 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
             # prevent moves that yield straight fours
             if searchBoardSeq(player_board, STRAIGHT_FOUR) != 0:
                 four_threats.add(moveConvertType(min_move))
+            # prevent moves that yield straight threes
+            # if searchBoardSeq(player_board, STRAIGHT_THREE) != 0:
+            #     three_threats.add(moveConvertType(min_move))
 
             scenarios[maxmove][minmove] = getScore(computer_board, player_board)
             # Alpha pruning
@@ -260,11 +266,20 @@ def generateMinimaxMoves(board, computerColor, playerColor, depth):
     if len(four_threats) != 0:
         print('threat of a straight four in one move, preventing...')
         for threat in four_threats:
-            best_moves[threat] = scores[threat]
-        print(best_moves)
-        bestMaxMove = max(best_moves.items(), key=operator.itemgetter(1))[0]
+            best_moves_four[threat] = scores[threat]
+        print(best_moves_four)
+        bestMaxMove = max(best_moves_four.items(), key=operator.itemgetter(1))[0]
         move = moveConvertType(bestMaxMove)
         return move
+
+    # if len(three_threats) != 0:
+    #     print('threat of a straight three in one move, preventing...')
+    #     for threat in three_threats:
+    #         best_moves_three[threat] = scores[threat]
+    #     print(best_moves_three)
+    #     bestMaxMove = max(best_moves_three.items(), key=operator.itemgetter(1))[0]
+    #     move = moveConvertType(bestMaxMove)
+    #     return move
 
     bestMaxMove = max(scores.items(), key=operator.itemgetter(1))[0]
     move = moveConvertType(bestMaxMove)
