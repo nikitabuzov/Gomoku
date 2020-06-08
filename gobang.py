@@ -54,7 +54,7 @@ def print_board(board):
             sys.stdout.write("---+")
         sys.stdout.write("\n")
 
-def moveConvertType(move):
+def moveConvertType(move): # changes the way a move is represented between array coords and string
     if type(move) == str:
         new_move = re.split('(\d+)', move)
         letters = new_move[0].split(' ')
