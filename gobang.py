@@ -330,7 +330,6 @@ def makeMove(board, player, move):
     return the_board
 
 def isWinner(board, who):
-    ''' changed arguments of the func'''
     checkboard = boardToStrings(board, who)
     if searchBoardSeq(checkboard, WIN) != 0:
         return True
